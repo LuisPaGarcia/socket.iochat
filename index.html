@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Chat con BOS.IO</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; display: table}
+      form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #messages { list-style-type: none; margin: 0; padding: 0;  font-size: 18px ; 18px; font-family: Verdana, Geneva, Tahoma, sans-serif}
+      #messages li { padding: 5px 10px; }
+      .page {
+        height: 100%;
+        position: absolute;
+        width: 100%;
+      }
+
+      .login.page {
+        background-color: #000;
+      }
+
+      .login.page .form {
+        height: 100px;
+        margin-top: -100px;
+        position: absolute;
+
+        text-align: center;
+        top: 50%;
+        width: 100%;
+      }
+
+      .login.page .form .usernameInput {
+        background-color: transparent;
+        border: none;
+        border-bottom: 2px solid #fff;
+        outline: none;
+        padding-bottom: 15px;
+        text-align: center;
+        width: 400px;
+      }
+
+      .login.page .title {
+        font-size: 200%;
+      }
+
+      .login.page .usernameInput {
+        font-size: 200%;
+        letter-spacing: 3px;
+      }
+
+      .login.page .title, .login.page .usernameInput {
+        color: #fff;
+        font-weight: 100;
+      }
+      .misMensajes{
+        text-align: right;
+        color: white;
+        background: green;
+      }
+      .otrosMensajes{
+        text-align: left;
+        background: lightgreen;
+      }
+
+    </style>
+  </head>
+  <body>
+  <ul class="pages" >
+    <li class="chat page" id="chat">
+      <ul id="messages"></ul>
+      <form id="form" action="">
+        <input id="m" autocomplete="off" /><button id="enviar">Enviar</button>
+      </form>
+    </li>
+  
+    <li class="login page" id="login">
+      <div class="form">
+        <h3 class="title">Coloca tu nombre</h3>
+        <input id="username" class="usernameInput" type="text" maxlength="14"  autocomplete="off"/>
+      </div>
+    </li>
+ <audio id="audio" src="http://www.superluigibros.com/downloads/sounds/N64/YOSHISISLAND/WAV/yoshiPickUpEgg.wav" autostart="false" ></audio>
+   
+    <script>
+    function playSound() {
+          var sound = document.getElementById("audio");
+          sound.play();
+      }
+    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+ /*
+    (function(){
+      var socket = io();
+      let formulario = document.getElementById('form');
+
+      formulario.addEventListener('submit', function(){
+        let textoMensaje = document.getElementById('m').value;
+        console.log(textoMensaje)
+        socket.emit('chat message', textoMensaje);
+        document.getElementById('m').value = '';
+        return false;
+      });
+
+      socket.on('chat message', function(msg){
+        console.log(msg);
+        var pila = document.getElementById('messages')
+        var nuevoMensaje = document.createElement('LI');
+        var t = document.createTextNode(msg);
+        nuevoMensaje.appendChild(t);
+        pila.appendChild(nuevoMensaje);
+        return false;
+
+      })
+    })();
+*/
+
+var socket = io();
+var username = '';
+var usernameObj = document.getElementById('username');
+var chatList = document.getElementById('messages');
+var x = document.getElementById("myAudio"); 
+
+document.getElementById('username').focus();    
+
+
+usernameObj.addEventListener('keypress',(e)=>{
+  var key = e.which || e.keyCode
+
+  if(key == 13){
+    username = usernameObj.value.trim();
+    if(username == '')
+      return;
+    console.log(username)
+    socket.emit('add user', username);
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('m').focus();    
+  }
+
+});
+
+
+  $('form').submit(function(){
+    socket.emit('chat message', { message:$('#m').val() , username:username , time:new Date() });
+    $('#m').val('');
+    return false;
+  });
+
+  socket.on('chat message', function(res){
+    var nuevaClase = '';
+    if(res.username != username){
+      nuevaClase = 'otrosMensajes'
+      $('#messages').append($('<li>').addClass(nuevaClase).text(`${res.username}: ${res.message}`));// + ' ' + res.username + ' ' + res.time));
+      playSound();
+    }else{
+      nuevaClase = 'misMensajes'
+      $('#messages').append($('<li>').addClass(nuevaClase).text(res.message));// + ' ' + res.username + ' ' + res.time));
+    }
+  });
+
+  function outputMessage(type,response){
+    var misMensajes = document.createElement('LI');
+    var otrosMensajes = document.createElement('LI');
+    misMensajes.className = 'misMensajes'
+    otrosMensajes.className = 'otrosMensajes'
+    if(type == 'mio'){
+      misMensajes.innerText = response.message + ' ' + response.username + ' ' + response.time; 
+    }else{
+      otrosMensajes.innerText = response.message + ' ' + response.username + ' ' + response.time; 
+    }
+
+  }
+
+
+/*
+    $(function () {
+
+        
+
+    });
+*/
+
+    </script>
+  </body>
+</html>
